@@ -22,6 +22,10 @@
                 <th>
                     @Html.DisplayNameFor(m => m.Name)
                 </th>
+                <th>
+                    @Html.DisplayNameFor(m => m.Description)
+                </th>
+                <th></th>
                 <th>Action</th>
             </tr>
             @foreach (var item in Model)
@@ -30,7 +34,12 @@
                     <td>
                         @Html.DisplayFor(m => item.Name)
                     </td>
-                    <td></td>
+                    <td>
+                        @Html.DisplayFor(m => item.Description)
+                    </td>
+                    <td>
+                        <partial name="_TableButtonPartial" model="item.Id"/>
+                    </td>
                 </tr>
             }
         </table>
