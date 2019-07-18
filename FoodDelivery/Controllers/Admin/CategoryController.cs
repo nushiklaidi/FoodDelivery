@@ -99,7 +99,7 @@ namespace FoodDelivery.Controllers.Admin
         }
 
         //POST - DELETE
-        [HttpPost]
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int? id)
         {
