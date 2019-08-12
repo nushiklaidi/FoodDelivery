@@ -1,0 +1,122 @@
+﻿@model FoodDelivery.Models.ViewModels.MenuItemViewModel
+@using FoodDelivery.Extensions
+@using FoodDelivery.Utility
+
+@{
+    ViewData["Title"] = "Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+<h2 class="text-info">Edit MenuItem</h2>
+<br />
+
+
+<form method="post" asp-action="Create" enctype="multipart/form-data">
+    <div class="row">
+        <input type="hidden" asp-for="MenuItems.Id" />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="col-8">
+            <div class="form-group row">
+                <div class="col-4">
+                    <label asp-for="MenuItems.Name" class="col-form-label"></label>
+                </div>
+                <div class="col-8">
+                    <input asp-for="MenuItems.Name" class="form-control" />
+                </div>
+                <span asp-validation-for="MenuItems.Name" class="text-danger"></span>
+            </div>
+            <div class="form-group row">
+                <div class="col-4">
+                    <label asp-for="MenuItems.Price" class="col-form-label"></label>
+                </div>
+                <div class="col-8">
+                    <input asp-for="MenuItems.Price" class="form-control" />
+                </div>
+                <span asp-validation-for="MenuItems.Price" class="text-danger"></span>
+            </div>
+            <div class="form-group row">
+                <div class="col-4">
+                    <label asp-for="MenuItems.Image" class="col-form-label"></label>
+                </div>
+                <div class="col-8">
+                    <input type="file" name="files" multiple class="form-control" />
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="col-4">
+                    <label asp-for="MenuItems.CategoryId" class="col-form-label"></label>
+                </div>
+                <div class="col-8">
+                    <select asp-for="@Model.MenuItems.CategoryId" id="CategoryId" asp-items="Model.Category.ToSelectListItem(Model.MenuItems.CategoryId)" class="form-control"></select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-4">
+                    <label asp-for="MenuItems.SubCategoryId" class="col-form-label"></label>
+                </div>
+                <div class="col-8">
+                    <select asp-for="@Model.MenuItems.SubCategoryId" name="SubCategoryId" id="SubCategoryId" asp-items="@(new SelectList(string.Empty,"Id","Name"))" class="form-control"></select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-4">
+                    <label asp-for="MenuItems.Spicy" class="col-form-label"></label>
+                </div>
+                <div class="col-8">
+                    <select asp-for="MenuItems.Spicy" asp-items="Html.GetEnumSelectList<MenuItems.EnumSpicy>()" class="form-control"></select>
+                </div>
+            </div>
+
+        </div>
+        <div class="col-3 offset-1">
+            @if (Model.MenuItems.Image == null)
+            {
+                <img src="~/img/def_img.png" width="100%" style="border-radius:5px;border: 1px solid #bbb9b9;" />
+            }
+            else
+            {
+                <img src="@Model.MenuItems.Image" width="100%" style="border-radius:5px;border: 1px solid #bbb9b9;" />
+            }
+        </div>
+
+        <div class="col-8">
+            <div class="col-8 offset-4">
+                <partial name="_EditAndBackToListButton" model="Model.MenuItems.Id" />
+            </div>
+        </div>
+
+
+    </div>
+</form>
+
+@section Scripts{
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            getSubCategory();
+            $('#CategoryId').change(function () {
+                getSubCategory();
+            });
+        });
+
+        function getSubCategory() {
+            var url = '@Url.Content("~/")' + 'SubCategory/GetSubCategory';
+            var ddlsource = '#CategoryId';
+            $.getJSON(url, { id: $(ddlsource).val() }, function (data) {
+                var items = '';
+                $('#SubCategoryId').empty();
+                $.each(data, function (i, subcategory) {
+                    items += "<option value='" + subcategory.value + "'>" + subcategory.text + "</option>";
+                });
+
+                $('#SubCategoryId').html(items);
+            })
+        }
+    </script>
+
+}

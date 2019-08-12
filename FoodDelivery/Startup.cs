@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using FoodDelivery.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using FoodDelivery.Services;
 
 namespace FoodDelivery
 {
@@ -41,6 +42,8 @@ namespace FoodDelivery
             services.AddDefaultIdentity<IdentityUser>()
                 .AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+            //services.AddTransient<ICategoryServices, CategoryServices>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
