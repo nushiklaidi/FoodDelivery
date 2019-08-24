@@ -17,5 +17,6 @@ namespace FoodDelivery.Data
         public DbSet<Category> Category { get; set; }
         public DbSet<SubCategory> SubCategory { get; set; }
         public DbSet<MenuItems> MenuItem { get; set; }
+        public DbSet<Coupon> Coupon { get; set; }
     }
 }
