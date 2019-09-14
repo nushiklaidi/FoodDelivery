@@ -1,4 +1,6 @@
 ﻿@using FoodDelivery.Utility
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
 <!DOCTYPE html>
 <html>
 <head>
@@ -45,11 +47,26 @@
                                 </div>
                             </li>
                         }
-                        <li style="color:white">
-                            <a href="#" class="nav-link">
-                                <i class="fas fa-shopping-cart"> (0)</i>
-                            </a>
-                        </li>
+
+                        @if (HttpContextAccessor.HttpContext.Session.GetInt32(StaticDetail.ssShoppingCartCount) != null)
+                        {
+                            <li style="color:white">
+                                <a href="#" class="nav-link">
+                                    @{
+                                        var count = HttpContextAccessor.HttpContext.Session.GetInt32(StaticDetail.ssShoppingCartCount);
+                                    }
+                                    <i class="fas fa-shopping-cart"> (@count)</i>
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li style="color:white">
+                                <a href="#" class="nav-link">
+                                    <i class="fas fa-shopping-cart"> (0)</i>
+                                </a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
