@@ -5,11 +5,14 @@ using System.Threading.Tasks;
 using FoodDelivery.Data;
 using FoodDelivery.Models;
 using FoodDelivery.Services;
+using FoodDelivery.Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FoodDelivery.Controllers.Admin
 {
+    [Authorize(Roles = StaticDetail.ManagerUser)]
     public class CategoryController : Controller
     {
         private readonly ApplicationDbContext _db;

@@ -7,12 +7,14 @@ using FoodDelivery.Data;
 using FoodDelivery.Models;
 using FoodDelivery.Models.ViewModels;
 using FoodDelivery.Utility;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FoodDelivery.Controllers.Admin
 {
+    [Authorize(Roles = StaticDetail.ManagerUser)]
     public class MenuItemController : Controller
     {
         private readonly ApplicationDbContext _db;

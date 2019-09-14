@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using FoodDelivery.Utility
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -29,23 +30,25 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
                     <partial name="_LoginPartial" />
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item dropdown text-white">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropDownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Content Management
+                        @if (User.IsInRole(StaticDetail.ManagerUser))
+                        {
+                            <li class="nav-item dropdown text-white">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropDownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Content Management
+                                </a>
+                                <div class="dropdown-menu" aria-labelledby="navbarDropDownMenuLink">
+                                    <a class="dropdown-item" asp-action="Index" asp-controller="Category">Category</a>
+                                    <a class="dropdown-item" asp-action="Index" asp-controller="SubCategory">SubCategory</a>
+                                    <a class="dropdown-item" asp-action="Index" asp-controller="MenuItem">Menu Item</a>
+                                    <a class="dropdown-item" asp-action="Index" asp-controller="Coupon">Coupons</a>
+                                    <a class="dropdown-item" asp-action="Index" asp-controller="User">Users</a>
+                                </div>
+                            </li>
+                        }
+                        <li style="color:white">
+                            <a href="#" class="nav-link">
+                                <i class="fas fa-shopping-cart"> (0)</i>
                             </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropDownMenuLink">
-                                <a class="dropdown-item" asp-action="Index" asp-controller="Category">Category</a>
-                                <a class="dropdown-item" asp-action="Index" asp-controller="SubCategory">SubCategory</a>
-                                <a class="dropdown-item" asp-action="Index" asp-controller="MenuItem">Menu Item</a>
-                                <a class="dropdown-item" asp-action="Index" asp-controller="Coupon">Coupons</a>
-                                <a class="dropdown-item">Users</a>
-                            </div>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
                     </ul>
                 </div>
