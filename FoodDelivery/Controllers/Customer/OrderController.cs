@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FoodDelivery.Data;
 using FoodDelivery.Models;
 using FoodDelivery.Models.ViewModels;
+using FoodDelivery.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -90,6 +91,58 @@ namespace FoodDelivery.Controllers.Customer
             orderDetailsVM.Order.ApplicationUser = await _db.ApplicationUser.Where(u => u.Id == orderDetailsVM.Order.UserId).FirstOrDefaultAsync();
 
             return PartialView("_IndividualOrderDetails", orderDetailsVM);
+        }
+
+        [Authorize(Roles = StaticDetail.KitchenUser + "," + StaticDetail.ManagerUser)]
+        public async Task<IActionResult> ManageOrder()
+        {
+            List<OrderDetailsViewModel> orderDetailsVM = new List<OrderDetailsViewModel>();
+            
+            List<Order> orderHeader = await _db.Order
+                .Where(o => o.Status == StaticDetail.StatusSubmitted || o.Status == StaticDetail.StatusInProcess)                
+                .ToListAsync();
+
+            foreach (Order item in orderHeader)
+            {
+                OrderDetailsViewModel individual = new OrderDetailsViewModel
+                {
+                    Order = item,
+                    OrderDetails = await _db.OrderDetails.Where(o => o.OrderId == item.Id).ToListAsync()
+                };
+                orderDetailsVM.Add(individual);
+            }
+
+            return View(orderDetailsVM);
+        }
+
+        [Authorize(Roles = StaticDetail.KitchenUser + "," + StaticDetail.ManagerUser)]
+        public async Task<IActionResult> OrderPrepare(int OrderId)
+        {
+            Order order = await _db.Order.FindAsync(OrderId);
+            order.Status = StaticDetail.StatusInProcess;
+            await _db.SaveChangesAsync();
+            return RedirectToAction("ManageOrder", "Order");
+        }
+
+        [Authorize(Roles = StaticDetail.KitchenUser + "," + StaticDetail.ManagerUser)]
+        public async Task<IActionResult> OrderReady(int OrderId)
+        {
+            Order order = await _db.Order.FindAsync(OrderId);
+            order.Status = StaticDetail.StatusReady;
+            await _db.SaveChangesAsync();
+
+            //Email login to notify user that order is ready fot pickup
+
+            return RedirectToAction("ManageOrder", "Order");
+        }
+
+        [Authorize(Roles = StaticDetail.KitchenUser + "," + StaticDetail.ManagerUser)]
+        public async Task<IActionResult> OrderCancel(int OrderId)
+        {
+            Order order = await _db.Order.FindAsync(OrderId);
+            order.Status = StaticDetail.StatusCancelled;
+            await _db.SaveChangesAsync();
+            return RedirectToAction("ManageOrder", "Order");
         }
     }
 }
