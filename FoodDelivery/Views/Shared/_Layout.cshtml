@@ -52,7 +52,14 @@
                                 </div>
                             </li>
                         }
-
+                        @if (User.IsInRole(StaticDetail.ManagerUser) || User.IsInRole(StaticDetail.CustomerEndUser))
+                        {
+                            <li class="nav-item">
+                                <a asp-action="OrderHistory" asp-controller="Order" class="nav-link">
+                                    Order History
+                                </a>
+                            </li>
+                        }
                         @if (HttpContextAccessor.HttpContext.Session.GetInt32(StaticDetail.ssShoppingCartCount) != null)
                         {
                             <li style="color:white">

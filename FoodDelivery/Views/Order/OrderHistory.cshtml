@@ -1,0 +1,135 @@
+﻿@model FoodDelivery.Models.ViewModels.OrderListViewModel
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="row">
+    <div class="col-6">
+        <h2 class="text-info">Order History List</h2>
+    </div>
+    <div class="col-6 text-right">
+        <partial name="_CreateButtonPartial" />
+    </div>
+</div>
+<br />
+<div>
+    @if (Model.Orders.Count() > 0)
+    {
+        <table class="table table-striped border">
+            <tr class="table-secondary">
+                <th>
+                    @Html.DisplayNameFor(m => m.Orders[0].Order.Id)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(m => m.Orders[0].Order.PickupName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(m => m.Orders[0].Order.ApplicationUser.Email)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(m => m.Orders[0].Order.PickUpTime)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(m => m.Orders[0].Order.OrderTotal)
+                </th>
+                <th>
+                    Total Items
+                </th>
+                <th></th>
+                <th>
+                    @Html.DisplayNameFor(m => m.Orders[0].Order.Status)
+                </th>
+            </tr>
+            @foreach (var item in Model.Orders)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(m => item.Order.Id)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(m => item.Order.PickupName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(m => item.Order.ApplicationUser.Email)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(m => item.Order.PickUpDate)
+                    </td>
+                    <td>
+                        $@Html.DisplayFor(m => item.Order.OrderTotal)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(m => item.OrderDetails.Count)
+                    </td>                    
+                    <td>
+                        <button type="submit" class="btn btn-success ancorDetail" data-id="@item.Order.Id" data-toggle="modal">
+                            <i class="far fa-list-alt"></i> Details
+                        </button>
+                    </td>
+                    <td>
+                        <p class="btn btn-primary">
+                            <i class="far fa-clock"></i>
+                            @Html.DisplayFor(m => item.Order.Status)
+                        </p>                        
+                    </td>
+                </tr>
+            }
+        </table>
+        <div page-model="@Model.PagingInfo" page-classes-enabled="true" page-class="btn border" page-class-normal="btn btn-light" page-class-selected="btn btn-info active" class="btn-group float-right">
+
+        </div>
+        <br />
+    }
+    else
+    {
+        <p>No Order History</p>
+    }
+</div>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog-centered modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-light justify-content-center">
+                <h5 class="modal-title">Order Details</h5>
+            </div>
+            <div class="modal-lg justify-content-center" id="myModalContent">
+
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-secondary" style="width:20%" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{ 
+    <script>
+        var PostBackURL = '/Order/GetOrderDetails';
+
+        $(function () {
+            $(".ancorDetail").click(function () {
+                var $buttonClicked = $(this);
+                var id = $buttonClicked.attr('data-id');
+
+                $.ajax({
+                    type: "GET",
+                    url: PostBackURL,
+                    contentType: "application/json; charset=utf-8",
+                    data: { "Id": id },
+                    cache: false,
+                    datatype: "json",
+                    success: function (data) {
+                        $('#myModalContent').html(data);
+                        $('#myModal').modal('show');
+                    },
+                    error: function () {
+                        alert("Dynamic contect load failed");
+                    }
+                })
+            })
+        })
+
+    </script>
+}
