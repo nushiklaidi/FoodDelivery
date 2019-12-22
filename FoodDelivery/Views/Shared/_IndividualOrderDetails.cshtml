@@ -1,7 +1,7 @@
 ﻿@model FoodDelivery.Models.ViewModels.OrderDetailsViewModel
 @using FoodDelivery.Utility
 
-<form method="post">
+<form asp-action="OrderPickup" asp-controller="Order" asp-route-orderId="@Model.Order.Id" method="post">
     <div class="container row border ml-1">
         <div class="col-lg-8 col-12" style="border-right:1px solid #bbb9b9">
             <br />

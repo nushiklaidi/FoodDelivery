@@ -37,10 +37,10 @@
                 <th>
                     Total Items
                 </th>
-                <th></th>
                 <th>
                     @Html.DisplayNameFor(m => m.Orders[0].Order.Status)
                 </th>
+                <th></th>
             </tr>
             @foreach (var item in Model.Orders)
             {
@@ -62,18 +62,18 @@
                     </td>
                     <td>
                         @Html.DisplayFor(m => item.OrderDetails.Count)
-                    </td>                    
-                    <td>
-                        <button type="submit" class="btn btn-success ancorDetail" data-id="@item.Order.Id" data-toggle="modal">
-                            <i class="far fa-list-alt"></i> Details
-                        </button>
-                    </td>
+                    </td>    
                     <td>
                         <p class="btn btn-primary">
                             <i class="far fa-clock"></i>
                             @Html.DisplayFor(m => item.Order.Status)
-                        </p>                        
+                        </p>
                     </td>
+                    <td>
+                        <button type="submit" class="btn btn-success ancorDetail" data-id="@item.Order.Id" data-toggle="modal">
+                            <i class="far fa-list-alt"></i> Details
+                        </button>
+                    </td>                    
                 </tr>
             }
         </table>

@@ -52,7 +52,7 @@
                                 </div>
                             </li>
                         }
-                        @if (User.IsInRole(StaticDetail.ManagerUser) || User.IsInRole(StaticDetail.CustomerEndUser))
+                        @if (User.IsInRole(StaticDetail.ManagerUser) || User.IsInRole(StaticDetail.CustomerEndUser) || User.IsInRole(StaticDetail.FrontDeskUser) || User.IsInRole(StaticDetail.KitchenUser))
                         {
                             <li class="nav-item">
                                 <a asp-action="OrderHistory" asp-controller="Order" class="nav-link">
