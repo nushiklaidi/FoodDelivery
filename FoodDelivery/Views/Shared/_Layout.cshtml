@@ -60,7 +60,7 @@
                                 </a>
                             </li>
                         }
-                        @if (User.IsInRole(StaticDetail.KitchenUser) || User.IsInRole(StaticDetail.FrontDeskUser) || User.IsInRole(StaticDetail.ManagerUser))
+                        @if (User.IsInRole(StaticDetail.KitchenUser) || User.IsInRole(StaticDetail.FrontDeskUser) || User.IsInRole(StaticDetail.ManagerUser) || User.IsInRole(StaticDetail.DeliveryUser))
                         {
                             <li class="nav-item dropdown text-white">
                                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropDown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -74,7 +74,11 @@
                                     @if (User.IsInRole(StaticDetail.FrontDeskUser) || User.IsInRole(StaticDetail.ManagerUser))
                                     {
                                         <a class="dropdown-item" asp-action="OrderPickup" asp-controller="Order">Order Pickup</a>
-                                    }                                    
+                                    }
+                                    @if (User.IsInRole(StaticDetail.DeliveryUser) || User.IsInRole(StaticDetail.ManagerUser))
+                                    {
+                                        <a class="dropdown-item" asp-action="OrderDelivery" asp-controller="Order">Order For Delivery</a>
+                                    }
                                 </div>
                             </li>
                         }

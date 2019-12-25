@@ -28,6 +28,7 @@ namespace FoodDelivery.Utility
         public const string StatusReady = "Ready for Pickup";
         public const string StatusCompleted = "Completed";
         public const string StatusCancelled = "Cancelled";
+        public const string StatusForDelivery = "For Delivery";
 
         public const string PaymentStatusPending = "Pending";
         public const string PaymentStatusApproved = "Approved";

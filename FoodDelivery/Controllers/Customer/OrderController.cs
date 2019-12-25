@@ -146,6 +146,7 @@ namespace FoodDelivery.Controllers.Customer
             return RedirectToAction("ManageOrder", "Order");
         }
 
+        [Authorize(Roles = StaticDetail.FrontDeskUser + "," + StaticDetail.ManagerUser)]
         public async Task<IActionResult> OrderPickup(int productPage = 1, string searchEmail = null, string searchPhone = null, string searchName = null)
         {
             OrderListViewModel orderListVM = new OrderListViewModel()
@@ -247,10 +248,118 @@ namespace FoodDelivery.Controllers.Customer
         public async Task<IActionResult> OrderPickupPost(int orderId)
         {
             Order order = await _db.Order.FindAsync(orderId);
-            order.Status = StaticDetail.StatusCompleted;
+            order.Status = StaticDetail.StatusForDelivery;
             await _db.SaveChangesAsync();
 
             return RedirectToAction("OrderPickup", "Order");
+        }
+
+        [Authorize(Roles = StaticDetail.DeliveryUser + "," + StaticDetail.ManagerUser)]
+        public async Task<IActionResult> OrderDelivery(int productPage = 1, string searchEmail = null, string searchPhone = null, string searchName = null)
+        {
+            OrderListViewModel orderListVM = new OrderListViewModel()
+            {
+                Orders = new List<OrderDetailsViewModel>()
+            };
+
+            List<Order> OrderList = new List<Order>();
+
+            StringBuilder param = new StringBuilder();
+            param.Append("/Order/OrderDelivery?productPage=:");
+
+            param.Append("&searchName=");
+            if (searchName != null)
+            {
+                param.Append(searchName);
+            }
+
+            param.Append("&searchEmail=");
+            if (searchEmail != null)
+            {
+                param.Append(searchEmail);
+            }
+
+            param.Append("&searchPhone=");
+            if (searchPhone != null)
+            {
+                param.Append(searchPhone);
+            }
+
+            if (searchEmail != null || searchName != null || searchPhone != null)
+            {
+                var user = new ApplicationUser();
+
+                if (searchName != null)
+                {
+                    OrderList = await _db.Order.Include(o => o.ApplicationUser)
+                        .Where(u => u.PickupName.ToLower().Contains(searchName.ToLower()))
+                        .ToListAsync();
+                }
+                else
+                {
+                    if (searchEmail != null)
+                    {
+                        user = await _db.ApplicationUser
+                            .Where(u => u.Email.ToLower().Contains(searchEmail.ToLower()))
+                            .FirstOrDefaultAsync();
+
+                        OrderList = await _db.Order.Include(o => o.ApplicationUser)
+                            .Where(o => o.UserId == user.Id)
+                            .ToListAsync();
+                    }
+                    else
+                    {
+                        if (searchPhone != null)
+                        {
+                            OrderList = await _db.Order.Include(o => o.ApplicationUser)
+                                .Where(u => u.PhoneNumber.Contains(searchPhone))
+                                .ToListAsync();
+                        }
+                    }
+                }
+
+            }
+            else
+            {
+                OrderList = await _db.Order.Include(o => o.ApplicationUser)
+                    .Where(u => u.Status == StaticDetail.StatusForDelivery)
+                    .ToListAsync();
+            }
+
+            foreach (Order item in OrderList)
+            {
+                OrderDetailsViewModel individual = new OrderDetailsViewModel
+                {
+                    Order = item,
+                    OrderDetails = await _db.OrderDetails.Where(o => o.OrderId == item.Id).ToListAsync()
+                };
+                orderListVM.Orders.Add(individual);
+            }
+
+            var count = orderListVM.Orders.Count;
+            orderListVM.Orders = orderListVM.Orders.OrderByDescending(p => p.Order.Id).Skip((productPage - 1) * PageSize).Take(PageSize).ToList();
+
+            orderListVM.PagingInfo = new PagingInfo
+            {
+                CurrentPage = productPage,
+                ItemsPerPage = PageSize,
+                TotalItem = count,
+                UrlParam = param.ToString()
+            };
+
+            return View(orderListVM);
+        }
+
+        [Authorize(Roles = StaticDetail.DeliveryUser + "," + StaticDetail.ManagerUser)]
+        [HttpPost]
+        [ActionName("OrderDelivery")]
+        public async Task<IActionResult> OrderDeliveryPost(int orderId)
+        {
+            Order order = await _db.Order.FindAsync(orderId);
+            order.Status = StaticDetail.StatusCompleted;
+            await _db.SaveChangesAsync();
+
+            return RedirectToAction("OrderDelivery", "Order");
         }
     }
 }
