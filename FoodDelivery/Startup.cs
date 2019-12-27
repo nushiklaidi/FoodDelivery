@@ -14,6 +14,7 @@ using FoodDelivery.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using FoodDelivery.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace FoodDelivery
 {
@@ -45,6 +46,8 @@ namespace FoodDelivery
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
             //services.AddTransient<ICategoryServices, CategoryServices>();
+            services.AddSingleton<IEmailSender, EmailSender>();
+            services.Configure<EmailOptions>(Configuration);            
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 

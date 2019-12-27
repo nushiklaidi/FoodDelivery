@@ -8,6 +8,7 @@ using FoodDelivery.Models;
 using FoodDelivery.Models.ViewModels;
 using FoodDelivery.Utility;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,13 +17,15 @@ namespace FoodDelivery.Controllers.Customer
     public class CartController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly IEmailSender _emailSender;
 
         [BindProperty]
         public OrderDetailsCartViewModel orderDetailsVM { get; set; }
 
-        public CartController(ApplicationDbContext db)
+        public CartController(ApplicationDbContext db, IEmailSender emailSender)
         {
             _db = db;
+            _emailSender = emailSender;
         }
         
         public async Task<IActionResult> Index()
@@ -158,6 +161,8 @@ namespace FoodDelivery.Controllers.Customer
             _db.ShoppingCart.RemoveRange(orderDetailsVM.ListCart);
 
             HttpContext.Session.SetInt32(StaticDetail.ssShoppingCartCount, 0);
+
+            await _emailSender.SendEmailAsync(_db.Users.Where(u => u.Id == claim.Value).FirstOrDefault().Email, "Food - Order Created " + orderDetailsVM.Order.Id.ToString(), "Order has been submitted successfully");
 
             await _db.SaveChangesAsync();
 
