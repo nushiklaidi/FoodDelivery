@@ -16,12 +16,41 @@ namespace FoodDelivery.Services
         {
             _db = db;
         }
-
+           
         public async Task<IEnumerable<Category>> GetAll()
         {
-            var Categories = await _db.Category.ToListAsync();
+            return await _db.Category.ToListAsync();            
+        }
 
-            return Categories;
-        }        
+        public async Task<Category> Create(Category category)
+        {
+            _db.Category.Add(category);
+            await _db.SaveChangesAsync();
+
+            return category;
+        }
+
+        public async Task<Category> GetId(int? id)
+        {
+            return await _db.Category.FindAsync(id);            
+        }
+
+        public async Task<Category> Update(Category category)
+        {
+            _db.Category.Update(category);
+            await _db.SaveChangesAsync();
+
+            return category;
+        }
+
+        public async Task<Category> Delete(int? id)
+        {
+            var findId = await GetId(id);
+
+            _db.Category.Remove(findId);
+            await _db.SaveChangesAsync();
+
+            return findId;
+        }
     }
 }

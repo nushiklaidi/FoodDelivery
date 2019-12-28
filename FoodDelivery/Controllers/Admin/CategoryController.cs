@@ -16,18 +16,16 @@ namespace FoodDelivery.Controllers.Admin
     [Authorize(Roles = StaticDetail.ManagerUser)]
     public class CategoryController : Controller
     {
-        private readonly ApplicationDbContext _db;
         private readonly IUnitOfWork _unitOfWork;
-        public CategoryController(ApplicationDbContext db, IUnitOfWork unitOfWork)
+
+        public CategoryController(IUnitOfWork unitOfWork)
         {
-            _db = db;
             _unitOfWork = unitOfWork;
         }
 
         //GET
         public async Task<IActionResult> Index()
         {
-            //return View(await _db.Category.ToListAsync());
             return View(await _unitOfWork.Category.GetAll());
         }
 
@@ -44,9 +42,7 @@ namespace FoodDelivery.Controllers.Admin
         {
             if (ModelState.IsValid)
             {
-                //If valid
-                _db.Category.Add(category);
-                await _db.SaveChangesAsync();
+                await _unitOfWork.Category.Create(category);
 
                 return RedirectToAction(nameof(Index));
             }
@@ -62,7 +58,7 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            var category = await _db.Category.FindAsync(id);
+            var category = await _unitOfWork.Category.GetId(id);
 
             if (category == null)
             {
@@ -79,8 +75,7 @@ namespace FoodDelivery.Controllers.Admin
         {
             if (ModelState.IsValid)
             {
-                _db.Update(category);
-                await _db.SaveChangesAsync();
+                await _unitOfWork.Category.Update(category);
 
                 return RedirectToAction(nameof(Index));
             }
@@ -95,7 +90,7 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            var category = await _db.Category.FindAsync(id);
+            var category = await _unitOfWork.Category.GetId(id);
 
             if (category == null)
             {
@@ -115,15 +110,15 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            var category = await _db.Category.FindAsync(id);
+            var category = await _unitOfWork.Category.GetId(id);
 
             if (category == null)
             {
                 return NotFound();
             }
 
-            _db.Category.Remove(category);
-            await _db.SaveChangesAsync();
+            await _unitOfWork.Category.Delete(id);
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -135,7 +130,7 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            var category = await _db.Category.FindAsync(id);
+            var category = await _unitOfWork.Category.GetId(id);
 
             if (category == null)
             {
