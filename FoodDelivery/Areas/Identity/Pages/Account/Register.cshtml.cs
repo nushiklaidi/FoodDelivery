@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using FoodDelivery.Data;
 using FoodDelivery.Models;
 using FoodDelivery.Utility;
 using Microsoft.AspNetCore.Authorization;
@@ -22,19 +24,22 @@ namespace FoodDelivery.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private ApplicationDbContext _db;
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            ApplicationDbContext db)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
             _roleManager = roleManager;
+            _db = db;
         }
 
         [BindProperty]
@@ -151,6 +156,8 @@ namespace FoodDelivery.Areas.Identity.Pages.Account
                             }
                         }
                     }
+                    await _emailSender.SendEmailAsync(_db.Users.Where(u => u.Email == user.Email).FirstOrDefault().Email, "Food - New User Registration", "New user has been registered successfully");
+
                     return RedirectToAction("Index", "User");
                     //await _userManager.AddToRoleAsync(user, StaticDetail.ManagerUser);
 
@@ -162,10 +169,6 @@ namespace FoodDelivery.Areas.Identity.Pages.Account
                     //    pageHandler: null,
                     //    values: new { userId = user.Id, code = code },
                     //    protocol: Request.Scheme);
-
-                    //await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                    //    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-                                        
                     
                 }
                 foreach (var error in result.Errors)
