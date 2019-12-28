@@ -9,6 +9,7 @@ using FoodDelivery.Models;
 using FoodDelivery.Models.ViewModels;
 using FoodDelivery.Utility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,13 +17,15 @@ namespace FoodDelivery.Controllers.Customer
 {
     public class OrderController : Controller
     {
+        private readonly IEmailSender _emailSender;
         private ApplicationDbContext _db;
 
         private int PageSize = 1;
 
-        public OrderController(ApplicationDbContext db)
+        public OrderController(ApplicationDbContext db, IEmailSender emailSender)
         {
             _db = db;
+            _emailSender = emailSender;
         }
 
         public IActionResult Index()
@@ -131,9 +134,8 @@ namespace FoodDelivery.Controllers.Customer
             Order order = await _db.Order.FindAsync(OrderId);
             order.Status = StaticDetail.StatusReady;
             await _db.SaveChangesAsync();
-
-            //Email login to notify user that order is ready fot pickup
-
+            await _emailSender.SendEmailAsync(_db.Users.Where(u => u.Id == order.UserId).FirstOrDefault().Email, "Food - Order ready for pickup " + order.Id.ToString(), "Order is ready for pickup");
+            
             return RedirectToAction("ManageOrder", "Order");
         }
 
@@ -143,6 +145,8 @@ namespace FoodDelivery.Controllers.Customer
             Order order = await _db.Order.FindAsync(OrderId);
             order.Status = StaticDetail.StatusCancelled;
             await _db.SaveChangesAsync();
+            await _emailSender.SendEmailAsync(_db.Users.Where(u => u.Id == order.UserId).FirstOrDefault().Email, "Food - Order Canceled " + order.Id.ToString(), "Order has been canceled successfully");
+
             return RedirectToAction("ManageOrder", "Order");
         }
 
@@ -250,6 +254,7 @@ namespace FoodDelivery.Controllers.Customer
             Order order = await _db.Order.FindAsync(orderId);
             order.Status = StaticDetail.StatusForDelivery;
             await _db.SaveChangesAsync();
+            await _emailSender.SendEmailAsync(_db.Users.Where(u => u.Id == order.UserId).FirstOrDefault().Email, "Food - Order Completed " + order.Id.ToString(), "Order has been completed successfully");
 
             return RedirectToAction("OrderPickup", "Order");
         }
@@ -358,6 +363,7 @@ namespace FoodDelivery.Controllers.Customer
             Order order = await _db.Order.FindAsync(orderId);
             order.Status = StaticDetail.StatusCompleted;
             await _db.SaveChangesAsync();
+            await _emailSender.SendEmailAsync(_db.Users.Where(u => u.Id == order.UserId).FirstOrDefault().Email, "Food - Order Delivered " + order.Id.ToString(), "Order has been Delivered successfully");
 
             return RedirectToAction("OrderDelivery", "Order");
         }
