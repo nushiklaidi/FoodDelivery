@@ -8,6 +8,6 @@ namespace FoodDelivery.Services
 {
     public interface ICategoryServices
     {
-        List<Category> GetAll();
+        Task<IEnumerable<Category>> GetAll();
     }
 }

@@ -12,17 +12,16 @@ namespace FoodDelivery.Services
     {
         private readonly ApplicationDbContext _db;
         
-
         public CategoryServices(ApplicationDbContext db)
         {
             _db = db;
         }
 
-        public List<Category> GetAll()
+        public async Task<IEnumerable<Category>> GetAll()
         {
-            var Categories = _db.Category.ToList();
+            var Categories = await _db.Category.ToListAsync();
 
             return Categories;
-        }
+        }        
     }
 }

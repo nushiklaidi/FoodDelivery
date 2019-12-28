@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using FoodDelivery.Data;
 using FoodDelivery.Models;
 using FoodDelivery.Services;
+using FoodDelivery.Services.UnitOfWork;
 using FoodDelivery.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,16 +17,18 @@ namespace FoodDelivery.Controllers.Admin
     public class CategoryController : Controller
     {
         private readonly ApplicationDbContext _db;
-
-        public CategoryController(ApplicationDbContext db)
+        private readonly IUnitOfWork _unitOfWork;
+        public CategoryController(ApplicationDbContext db, IUnitOfWork unitOfWork)
         {
             _db = db;
+            _unitOfWork = unitOfWork;
         }
 
         //GET
         public async Task<IActionResult> Index()
         {
-            return View(await _db.Category.ToListAsync());
+            //return View(await _db.Category.ToListAsync());
+            return View(await _unitOfWork.Category.GetAll());
         }
 
         //GET - CREATE

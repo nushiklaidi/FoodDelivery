@@ -15,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using FoodDelivery.Services;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using FoodDelivery.Services.UnitOfWork;
 
 namespace FoodDelivery
 {
@@ -45,7 +46,8 @@ namespace FoodDelivery
                 .AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-            //services.AddTransient<ICategoryServices, CategoryServices>();
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
+            services.AddTransient<ICategoryServices, CategoryServices>();
             services.AddSingleton<IEmailSender, EmailSender>();
             services.Configure<EmailOptions>(Configuration);            
 
