@@ -49,6 +49,7 @@ namespace FoodDelivery
             services.AddTransient<IUnitOfWork, UnitOfWork>();
             services.AddTransient<ICategoryServices, CategoryServices>();
             services.AddTransient<ISubCategoryServices, SubCategoryServices>();
+            services.AddTransient<ICouponServices, CouponServices>();
 
             services.AddSingleton<IEmailSender, EmailSender>();
 

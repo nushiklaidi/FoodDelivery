@@ -12,6 +12,7 @@ namespace FoodDelivery.Services.UnitOfWork
 
         public ICategoryServices Category { get; private set; }
         public ISubCategoryServices SubCategory { get; private set; }
+        public ICouponServices Coupon { get; private set; }
 
         public UnitOfWork(ApplicationDbContext db)
         {
@@ -19,6 +20,7 @@ namespace FoodDelivery.Services.UnitOfWork
 
             Category = new CategoryServices(db);
             SubCategory = new SubCategoryServices(db);
+            Coupon = new CouponServices(db);
         }
     }
 }

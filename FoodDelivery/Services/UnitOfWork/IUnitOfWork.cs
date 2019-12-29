@@ -9,5 +9,6 @@ namespace FoodDelivery.Services.UnitOfWork
     {
         ICategoryServices Category { get; }
         ISubCategoryServices SubCategory { get; }
+        ICouponServices Coupon { get; }
     }
 }

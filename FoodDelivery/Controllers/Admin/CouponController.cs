@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FoodDelivery.Data;
 using FoodDelivery.Models;
+using FoodDelivery.Services.UnitOfWork;
 using FoodDelivery.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,15 +17,17 @@ namespace FoodDelivery.Controllers.Admin
     public class CouponController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private IUnitOfWork _unitOfWork;
 
-        public CouponController(ApplicationDbContext db)
+        public CouponController(ApplicationDbContext db, IUnitOfWork unitOfWork)
         {
             _db = db;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<IActionResult> Index()
         {
-            return View(await _db.Coupon.ToListAsync());
+            return View(await _unitOfWork.Coupon.GetAll());
         }
 
         //GET - CREATE
@@ -54,8 +57,8 @@ namespace FoodDelivery.Controllers.Admin
                     }
                     coupon.Picture = p1;
                 }
-                _db.Coupon.Add(coupon);
-                await _db.SaveChangesAsync();
+
+                await _unitOfWork.Coupon.Create(coupon);
 
                 return RedirectToAction(nameof(Index));
             }
@@ -69,11 +72,14 @@ namespace FoodDelivery.Controllers.Admin
             {
                 return NotFound();
             }
-            var coupon = await _db.Coupon.SingleOrDefaultAsync(m => m.Id == id);
+
+            var coupon = await _unitOfWork.Coupon.GetId(id);
+
             if (coupon == null)
             {
                 return NotFound();
             }
+
             return View(coupon);
         }
 
@@ -87,7 +93,7 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            var couponFromDb = await _db.Coupon.Where(c => c.Id == coupon.Id).FirstOrDefaultAsync();
+            var couponFromDb = await _unitOfWork.Coupon.GetId(coupon.Id);
 
             if (ModelState.IsValid)
             {
@@ -126,7 +132,7 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            var coupon = await _db.Coupon.FirstOrDefaultAsync(m => m.Id == id);
+            var coupon = await _unitOfWork.Coupon.GetId(id);
 
             if (coupon == null)
             {
@@ -143,7 +149,9 @@ namespace FoodDelivery.Controllers.Admin
             {
                 return NotFound();
             }
-            var coupon = await _db.Coupon.SingleOrDefaultAsync(m => m.Id == id);
+
+            var coupon = await _unitOfWork.Coupon.GetId(id);
+
             if (coupon == null)
             {
                 return NotFound();
@@ -156,9 +164,8 @@ namespace FoodDelivery.Controllers.Admin
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var coupon = await _db.Coupon.SingleOrDefaultAsync(m => m.Id == id);
-            _db.Coupon.Remove(coupon);
-            await _db.SaveChangesAsync();
+            await _unitOfWork.Coupon.Delete(id);
+
             return RedirectToAction(nameof(Index));
         }
 
