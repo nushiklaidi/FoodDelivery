@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using FoodDelivery.Data;
 using FoodDelivery.Models;
 using FoodDelivery.Models.ViewModels;
+using FoodDelivery.Services;
+using FoodDelivery.Services.UnitOfWork;
 using FoodDelivery.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,20 +19,20 @@ namespace FoodDelivery.Controllers.Admin
     public class SubCategoryController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly IUnitOfWork _unitOfWork;
+
+        public SubCategoryController(ApplicationDbContext db, IUnitOfWork unitOfWork)
+        {
+            _db = db;
+            _unitOfWork = unitOfWork;
+        }
 
         [TempData]
         public string StatusMessage { get; set; }
-
-        public SubCategoryController(ApplicationDbContext db)
-        {
-            _db = db;
-        }
-
+          
         public async Task<IActionResult> Index()
         {
-            var subCategories = await _db.SubCategory.Include(s => s.Category).ToListAsync();
-
-            return View(subCategories);
+            return View(await _unitOfWork.SubCategory.GetAll());
         }
 
         //GET - CREATE
@@ -38,9 +40,9 @@ namespace FoodDelivery.Controllers.Admin
         {
             SubCategoryAndCategoryViewModel model = new SubCategoryAndCategoryViewModel()
             {
-                CategoryList = await _db.Category.ToListAsync(),
-                SubCategory = new Models.SubCategory(),
-                SubCategoryList = await _db.SubCategory.OrderBy(p => p.Name).Select(p => p.Name).Distinct().ToListAsync()
+                CategoryList = await _unitOfWork.Category.GetAll(),
+                SubCategory = new SubCategory(),
+                SubCategoryList = await _unitOfWork.SubCategory.GetAll()
             };
 
             return View(model);
@@ -53,8 +55,7 @@ namespace FoodDelivery.Controllers.Admin
         {
             if (ModelState.IsValid)
             {
-                var subCategoryExist = _db.SubCategory.Include(s => s.Category)
-                .Where(s => s.Name == model.SubCategory.Name && s.Category.Id == model.SubCategory.CategoryId);
+                var subCategoryExist = _unitOfWork.SubCategory.SubCategoryExist(model);
 
                 if (subCategoryExist.Count() > 0)
                 {
@@ -63,8 +64,7 @@ namespace FoodDelivery.Controllers.Admin
                 }
                 else
                 {
-                    _db.SubCategory.Add(model.SubCategory);
-                    await _db.SaveChangesAsync();
+                    await _unitOfWork.SubCategory.Create(model);
 
                     return RedirectToAction(nameof(Index));
                 }
@@ -73,9 +73,9 @@ namespace FoodDelivery.Controllers.Admin
 
             SubCategoryAndCategoryViewModel modelVM = new SubCategoryAndCategoryViewModel()
             {
-                CategoryList = await _db.Category.ToListAsync(),
-                SubCategory = new Models.SubCategory(),
-                SubCategoryList = await _db.SubCategory.OrderBy(p => p.Name).Select(p => p.Name).Distinct().ToListAsync(),
+                CategoryList = await _unitOfWork.Category.GetAll(),
+                SubCategory = new SubCategory(),
+                SubCategoryList = await _unitOfWork.SubCategory.GetAll(),
                 StatusMessage = StatusMessage
             };
 
@@ -91,7 +91,8 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            var subCategory = await _db.SubCategory.SingleOrDefaultAsync(s => s.Id == id);
+            //var subCategory = await _db.SubCategory.SingleOrDefaultAsync(s => s.Id == id);
+            var subCategory = await _unitOfWork.SubCategory.GetId(id);
 
             if (subCategory == null)
             {
@@ -100,9 +101,9 @@ namespace FoodDelivery.Controllers.Admin
 
             SubCategoryAndCategoryViewModel model = new SubCategoryAndCategoryViewModel()
             {
-                CategoryList = await _db.Category.ToListAsync(),
+                CategoryList = await _unitOfWork.Category.GetAll(),
                 SubCategory = subCategory,
-                SubCategoryList = await _db.SubCategory.OrderBy(p => p.Name).Select(p => p.Name).Distinct().ToListAsync()
+                SubCategoryList = await _unitOfWork.SubCategory.GetAll()
             };
 
             return View(model);
@@ -115,8 +116,7 @@ namespace FoodDelivery.Controllers.Admin
         {
             if (ModelState.IsValid)
             {
-                var subCategoryExist = _db.SubCategory.Include(s => s.Category)
-                .Where(s => s.Name == model.SubCategory.Name && s.Category.Id == model.SubCategory.CategoryId);
+                var subCategoryExist = _unitOfWork.SubCategory.SubCategoryExist(model);
 
                 if (subCategoryExist.Count() > 0)
                 {
@@ -125,12 +125,7 @@ namespace FoodDelivery.Controllers.Admin
                 }
                 else
                 {
-                    var subCategoryFromDb = await _db.SubCategory.FindAsync(model.SubCategory.Id);
-
-                    subCategoryFromDb.Name = model.SubCategory.Name;
-                    subCategoryFromDb.Description = model.SubCategory.Description;
-                    
-                    await _db.SaveChangesAsync();
+                    await _unitOfWork.SubCategory.Update(model.SubCategory);
 
                     return RedirectToAction(nameof(Index));
                 }
@@ -141,7 +136,8 @@ namespace FoodDelivery.Controllers.Admin
             {
                 CategoryList = await _db.Category.ToListAsync(),
                 SubCategory = new Models.SubCategory(),
-                SubCategoryList = await _db.SubCategory.OrderBy(p => p.Name).Select(p => p.Name).Distinct().ToListAsync(),
+                //SubCategoryList = await _db.SubCategory.OrderBy(p => p.Name).Select(p => p.Name).Distinct().ToListAsync(),
+                SubCategoryList = await _unitOfWork.SubCategory.GetAll(),
                 StatusMessage = StatusMessage
             };
 
@@ -156,8 +152,8 @@ namespace FoodDelivery.Controllers.Admin
             {
                 return NotFound();
             }
-
-            var subCategory = await _db.SubCategory.Include(s => s.Category).SingleOrDefaultAsync(c => c.Id == id);
+                        
+            var subCategory = await _unitOfWork.SubCategory.GetId(id);
 
             if (subCategory == null)
             {
@@ -175,7 +171,7 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            var subCategory = await _db.SubCategory.Include(s => s.Category).SingleOrDefaultAsync(c => c.Id == id);
+            var subCategory = await _unitOfWork.SubCategory.GetId(id);
 
             if (subCategory == null)
             {
@@ -202,8 +198,7 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            _db.SubCategory.Remove(subCategory);
-            await _db.SaveChangesAsync();
+            await _unitOfWork.SubCategory.Delete(id);
 
             return RedirectToAction(nameof(Index));
         }
@@ -211,11 +206,7 @@ namespace FoodDelivery.Controllers.Admin
         //GET - SUBCATEGORY
         public async Task<IActionResult> GetSubCategory(int id)
         {
-            List<SubCategory> subCategories = new List<SubCategory>();
-
-            subCategories = await (from s in _db.SubCategory
-                             where s.CategoryId == id
-                             select s).ToListAsync();
+            var subCategories = await _unitOfWork.SubCategory.GetSubCategories(id);
 
             return Json(new SelectList(subCategories, "Id", "Name"));
         }

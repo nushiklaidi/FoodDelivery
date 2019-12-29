@@ -8,5 +8,6 @@ namespace FoodDelivery.Services.UnitOfWork
     public interface IUnitOfWork
     {
         ICategoryServices Category { get; }
+        ISubCategoryServices SubCategory { get; }
     }
 }

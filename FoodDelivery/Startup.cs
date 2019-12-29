@@ -48,7 +48,10 @@ namespace FoodDelivery
 
             services.AddTransient<IUnitOfWork, UnitOfWork>();
             services.AddTransient<ICategoryServices, CategoryServices>();
+            services.AddTransient<ISubCategoryServices, SubCategoryServices>();
+
             services.AddSingleton<IEmailSender, EmailSender>();
+
             services.Configure<EmailOptions>(Configuration);            
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
