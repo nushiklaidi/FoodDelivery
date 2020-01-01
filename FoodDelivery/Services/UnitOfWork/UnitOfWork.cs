@@ -18,6 +18,7 @@ namespace FoodDelivery.Services.UnitOfWork
         public ISubCategoryServices SubCategory { get; private set; }
         public ICouponServices Coupon { get; private set; }
         public IUserServices User { get; private set; }
+        public IMenuItemServices MenuItem { get; private set; }
 
         public UnitOfWork(ApplicationDbContext db, IHttpContextAccessor httpContextAccessor)
         {
@@ -28,6 +29,7 @@ namespace FoodDelivery.Services.UnitOfWork
             SubCategory = new SubCategoryServices(db);
             Coupon = new CouponServices(db);
             User = new UserServices(db, httpContextAccessor);
+            MenuItem = new MenuItemServices(db);
         }
     }
 }

@@ -13,5 +13,6 @@ namespace FoodDelivery.Services
         Task<Category> GetId(int? id);
         Task<Category> Update(Category category);
         Task<Category> Delete(int? id);
+        IEnumerable<Category> GetAllList();
     }
 }

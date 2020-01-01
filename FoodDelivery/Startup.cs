@@ -51,7 +51,8 @@ namespace FoodDelivery
             services.AddTransient<ISubCategoryServices, SubCategoryServices>();
             services.AddTransient<ICouponServices, CouponServices>();
             services.AddTransient<IUserServices, UserServices>();
-            
+            services.AddTransient<IMenuItemServices, MenuItemServices>();
+
             services.AddSingleton<IEmailSender, EmailSender>();
             services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 

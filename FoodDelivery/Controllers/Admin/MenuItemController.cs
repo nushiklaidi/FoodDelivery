@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FoodDelivery.Data;
 using FoodDelivery.Models;
 using FoodDelivery.Models.ViewModels;
+using FoodDelivery.Services.UnitOfWork;
 using FoodDelivery.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -20,29 +21,28 @@ namespace FoodDelivery.Controllers.Admin
         private readonly ApplicationDbContext _db;
         private readonly IHostingEnvironment _hostingEnvironment;
 
+        private readonly IUnitOfWork _unitOfWork;
+
         [BindProperty]
         public MenuItemViewModel MenuItemVM { get; set; }
 
-        public MenuItemController(ApplicationDbContext db, IHostingEnvironment hostingEnvironment)
+        public MenuItemController(ApplicationDbContext db, IHostingEnvironment hostingEnvironment, IUnitOfWork unitOfWork)
         {
             _db = db;
             _hostingEnvironment = hostingEnvironment;
+            _unitOfWork = unitOfWork;
+
             MenuItemVM = new MenuItemViewModel()
             {
-                Category = _db.Category,
-                MenuItems = new Models.MenuItems()
+                Category = _unitOfWork.Category.GetAllList(),
+                MenuItems = new MenuItems()
             };
         }
 
         //GET
         public async Task<IActionResult> Index()
         {
-            var menuItems = await _db.MenuItem
-                .Include(c => c.Category)
-                .Include(s => s.SubCategory)
-                .ToListAsync();
-
-            return View(menuItems);
+            return View(await _unitOfWork.MenuItem.GetAll());
         }
 
         //GET - CREATE
@@ -63,14 +63,13 @@ namespace FoodDelivery.Controllers.Admin
                 return View(MenuItemVM);
             }
 
-            _db.MenuItem.Add(MenuItemVM.MenuItems);
-            await _db.SaveChangesAsync();
+            await _unitOfWork.MenuItem.Create(MenuItemVM);
 
             //Image saving section
             string webRootPath = _hostingEnvironment.WebRootPath;
             var files = HttpContext.Request.Form.Files;
 
-            var menuItemFromDb = await _db.MenuItem.FindAsync(MenuItemVM.MenuItems.Id);
+            var menuItemFromDb = await _unitOfWork.MenuItem.GetId(MenuItemVM.MenuItems.Id);
 
             if (files.Count > 0)
             {
@@ -106,8 +105,8 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            MenuItemVM.MenuItems = await _db.MenuItem.Include(m => m.Category).Include(m => m.SubCategory).SingleOrDefaultAsync(m => m.Id == id);
-            MenuItemVM.SubCategory = await _db.SubCategory.Where(s => s.CategoryId == MenuItemVM.MenuItems.CategoryId).ToListAsync();
+            MenuItemVM.MenuItems = await _unitOfWork.MenuItem.GetId(id);
+            MenuItemVM.SubCategory = await _unitOfWork.SubCategory.GetListById(MenuItemVM.MenuItems.CategoryId);
 
             if (MenuItemVM.MenuItems == null)
             {
@@ -131,7 +130,7 @@ namespace FoodDelivery.Controllers.Admin
 
             if (!ModelState.IsValid)
             {
-                MenuItemVM.SubCategory = await _db.SubCategory.Where(s => s.CategoryId == MenuItemVM.MenuItems.CategoryId).ToListAsync();
+                MenuItemVM.SubCategory = await _unitOfWork.SubCategory.GetListById(MenuItemVM.MenuItems.CategoryId);
                 return View(MenuItemVM);
             }
             
@@ -183,7 +182,7 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            MenuItemVM.MenuItems = await _db.MenuItem.Include(m => m.Category).Include(m => m.SubCategory).SingleOrDefaultAsync(m => m.Id == id);
+            MenuItemVM.MenuItems = await _unitOfWork.MenuItem.GetId(id);
 
             if (MenuItemVM.MenuItems == null)
             {
@@ -201,7 +200,7 @@ namespace FoodDelivery.Controllers.Admin
                 return NotFound();
             }
 
-            MenuItemVM.MenuItems = await _db.MenuItem.Include(m => m.Category).Include(m => m.SubCategory).SingleOrDefaultAsync(m => m.Id == id);
+            MenuItemVM.MenuItems = await _unitOfWork.MenuItem.GetId(id);
 
             if (MenuItemVM.MenuItems == null)
             {
@@ -214,10 +213,10 @@ namespace FoodDelivery.Controllers.Admin
         //POST Delete MenuItem
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int? id)
         {
             string webRootPath = _hostingEnvironment.WebRootPath;
-            MenuItems menuItem = await _db.MenuItem.FindAsync(id);
+            MenuItems menuItem = await _unitOfWork.MenuItem.GetId(id);
 
             if (menuItem != null)
             {
@@ -227,8 +226,8 @@ namespace FoodDelivery.Controllers.Admin
                 {
                     System.IO.File.Delete(imagePath);
                 }
-                _db.MenuItem.Remove(menuItem);
-                await _db.SaveChangesAsync();
+
+                await _unitOfWork.MenuItem.Delete(id);
 
             }
 

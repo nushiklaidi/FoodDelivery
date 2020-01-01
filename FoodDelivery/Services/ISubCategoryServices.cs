@@ -16,5 +16,6 @@ namespace FoodDelivery.Services
         Task<SubCategory> Delete(int? id);
         IEnumerable<SubCategory> SubCategoryExist(SubCategoryAndCategoryViewModel model);
         Task<IEnumerable<SubCategory>> GetSubCategories(int id);
+        Task<IEnumerable<SubCategory>> GetListById(int? id);
     }
 }

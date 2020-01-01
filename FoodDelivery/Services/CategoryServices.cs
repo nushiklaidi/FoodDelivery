@@ -52,5 +52,10 @@ namespace FoodDelivery.Services
 
             return findId;
         }
+
+        public IEnumerable<Category> GetAllList()
+        {
+            return _db.Category.ToList();
+        }
     }
 }

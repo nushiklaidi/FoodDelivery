@@ -73,6 +73,9 @@ namespace FoodDelivery.Services
                                   select s).ToListAsync();
         }
 
-
+        public async Task<IEnumerable<SubCategory>> GetListById(int? id)
+        {
+            return await _db.SubCategory.Where(s => s.CategoryId == id).ToListAsync();
+        }
     }
 }
