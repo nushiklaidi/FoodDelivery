@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using FoodDelivery.Data;
+using FoodDelivery.Services.UnitOfWork;
 using FoodDelivery.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,60 +15,28 @@ namespace FoodDelivery.Controllers.Admin
     [Authorize(Roles = StaticDetail.ManagerUser)]
     public class UserController : Controller
     {
-        private readonly ApplicationDbContext _db;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public UserController(ApplicationDbContext db)
+        public UserController(IUnitOfWork unitOfWork)
         {
-            _db = db;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<IActionResult> Index()
-        {
-            var claimsIdentity = (ClaimsIdentity)this.User.Identity;
-            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-            var userList = await _db.ApplicationUser.Where(u => u.Id != claim.Value).ToListAsync();
-
-            return View(userList);
+        {        
+            return View(await _unitOfWork.User.GetAll());
         }
 
         public async Task<IActionResult> Lock(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var getUser = await _db.ApplicationUser.Where(m => m.Id == id).FirstOrDefaultAsync();
-
-            if (getUser == null)
-            {
-                return NotFound();
-            }
-
-            getUser.LockoutEnd = DateTime.Now.AddYears(1000);
-
-            await _db.SaveChangesAsync();
+            await _unitOfWork.User.LockUser(id);
 
             return RedirectToAction(nameof(Index));
         }
 
         public async Task<IActionResult> UnLock(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var getUser = await _db.ApplicationUser.Where(m => m.Id == id).FirstOrDefaultAsync();
-
-            if (getUser == null)
-            {
-                return NotFound();
-            }
-
-            getUser.LockoutEnd = DateTime.Now;
-
-            await _db.SaveChangesAsync();
+            await _unitOfWork.User.UnLockUser(id);
 
             return RedirectToAction(nameof(Index));
         }

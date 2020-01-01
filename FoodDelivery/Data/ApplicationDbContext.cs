@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Text;
 using FoodDelivery.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
