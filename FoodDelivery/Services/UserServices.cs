@@ -30,6 +30,13 @@ namespace FoodDelivery.Services
             return await _db.ApplicationUser.Where(u => u.Id != userId).ToListAsync();
         }
 
+        public async Task<ApplicationUser> GetCurrentUser()
+        {
+            var userId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            return await _db.ApplicationUser.Where(u => u.Id == userId).FirstOrDefaultAsync();
+        }
+
         public async Task<ApplicationUser> GetId(string id)
         {
             return await _db.ApplicationUser.Where(u => u.Id == id).FirstOrDefaultAsync();

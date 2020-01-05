@@ -10,6 +10,7 @@ namespace FoodDelivery.Services
     public interface IUserServices
     {
         Task<IEnumerable<ApplicationUser>> GetAll();
+        Task<ApplicationUser> GetCurrentUser();
         Task<ApplicationUser> GetId(string id);
         Task<ApplicationUser> LockUser(string id);
         Task<ApplicationUser> UnLockUser(string id);

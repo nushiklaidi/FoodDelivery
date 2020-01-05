@@ -35,6 +35,11 @@ namespace FoodDelivery.Services
             return findId;
         }
 
+        public async Task<IEnumerable<Coupon>> GetActiveCoupon()
+        {
+            return await _db.Coupon.Where(c => c.IsActive == true).ToListAsync();
+        }
+
         public async Task<IEnumerable<Coupon>> GetAll()
         {
             return await _db.Coupon.ToListAsync();

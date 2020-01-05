@@ -19,6 +19,7 @@ namespace FoodDelivery.Services.UnitOfWork
         public ICouponServices Coupon { get; private set; }
         public IUserServices User { get; private set; }
         public IMenuItemServices MenuItem { get; private set; }
+        public IShoppingCartServices ShoppingCart { get; private set; }
 
         public UnitOfWork(ApplicationDbContext db, IHttpContextAccessor httpContextAccessor)
         {
@@ -30,6 +31,7 @@ namespace FoodDelivery.Services.UnitOfWork
             Coupon = new CouponServices(db);
             User = new UserServices(db, httpContextAccessor);
             MenuItem = new MenuItemServices(db);
+            ShoppingCart = new ShoppingCartServices(db);
         }
     }
 }

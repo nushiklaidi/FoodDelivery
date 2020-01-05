@@ -17,7 +17,7 @@ namespace FoodDelivery.Services
         {
             _db = db;
         }
-
+        
         public async Task<MenuItems> Create(MenuItemViewModel menuItemVM)
         {
             _db.MenuItem.Add(menuItemVM.MenuItems);
@@ -44,6 +44,6 @@ namespace FoodDelivery.Services
         public async Task<MenuItems> GetId(int? id)
         {
             return await _db.MenuItem.Include(c => c.Category).Include(s => s.SubCategory).Where(m => m.Id == id).FirstOrDefaultAsync();
-        }
+        }        
     }
 }

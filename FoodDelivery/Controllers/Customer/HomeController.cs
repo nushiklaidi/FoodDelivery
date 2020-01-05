@@ -12,16 +12,19 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using FoodDelivery.Utility;
+using FoodDelivery.Services.UnitOfWork;
 
 namespace FoodDelivery.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public HomeController(ApplicationDbContext db)
+        public HomeController(ApplicationDbContext db, IUnitOfWork untOfWork)
         {
             _db = db;
+            _unitOfWork = untOfWork;
         }
 
         //GET - MenuItem
@@ -29,17 +32,16 @@ namespace FoodDelivery.Controllers
         {
             IndexViewModel IndexVM = new IndexViewModel()
             {
-                MenuItems = await _db.MenuItem.Include(m => m.Category).Include(m => m.SubCategory).ToListAsync(),
-                Category = await _db.Category.ToListAsync(),
-                Coupon = await _db.Coupon.Where(c => c.IsActive == true).ToListAsync()
+                MenuItems = await _unitOfWork.MenuItem.GetAll(),
+                Category = _unitOfWork.Category.GetAllList(),
+                Coupon = await _unitOfWork.Coupon.GetActiveCoupon()
             };
+            
+            var getUserId = await _unitOfWork.User.GetCurrentUser();
 
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-
-            if (claim != null)
-            {
-                var count = _db.ShoppingCart.Where(u => u.ApplicationUserId == claim.Value).ToList().Count;
+            if (getUserId != null)
+            {                
+                int count = _unitOfWork.ShoppingCart.GetShoppingCartsCount(getUserId.Id);
                 HttpContext.Session.SetInt32(StaticDetail.ssShoppingCartCount, count);
             }
 
@@ -50,10 +52,7 @@ namespace FoodDelivery.Controllers
         [Authorize]
         public async Task<IActionResult> Details(int id)
         {
-            var menuItemFromDb = await _db.MenuItem
-                .Include(m => m.Category)
-                .Include(m => m.SubCategory)
-                .Where(m => m.Id == id).FirstOrDefaultAsync();
+            var menuItemFromDb = await _unitOfWork.MenuItem.GetId(id);
 
             ShoppingCart shoppingCart = new ShoppingCart()
             {
@@ -74,34 +73,16 @@ namespace FoodDelivery.Controllers
 
             if (ModelState.IsValid)
             {
-                var claimsIdentity = (ClaimsIdentity)this.User.Identity;
-                var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-                objCart.ApplicationUserId = claim.Value;
+                var getUser = await _unitOfWork.User.GetCurrentUser();
+                objCart.ApplicationUserId = getUser.Id;
 
-                ShoppingCart cartFromDb = await _db.ShoppingCart
-                    .Where(c => c.ApplicationUserId == objCart.ApplicationUserId && c.MenuItemId == objCart.MenuItemId).FirstOrDefaultAsync();
-
-                if (cartFromDb == null)
-                {
-                    await _db.ShoppingCart.AddAsync(objCart);
-                }
-                else
-                {
-                    cartFromDb.Count = cartFromDb.Count + objCart.Count;
-                }
-                await _db.SaveChangesAsync();
-
-                var count = _db.ShoppingCart.Where(c => c.ApplicationUserId == objCart.ApplicationUserId).ToList().Count();
-                HttpContext.Session.SetInt32(StaticDetail.ssShoppingCartCount, count);
+                await _unitOfWork.ShoppingCart.AddToShoppingCart(objCart);
 
                 return RedirectToAction(nameof(Index));
             }
             else
             {
-                var menuItemFromDb = await _db.MenuItem
-                    .Include(m => m.Category)
-                    .Include(m => m.SubCategory)
-                    .Where(m => m.Id == objCart.MenuItemId).FirstOrDefaultAsync();
+                var menuItemFromDb = await _unitOfWork.MenuItem.GetId(objCart.MenuItem.Id);
 
                 ShoppingCart shoppingCart = new ShoppingCart()
                 {

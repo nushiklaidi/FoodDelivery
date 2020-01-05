@@ -12,5 +12,6 @@ namespace FoodDelivery.Services.UnitOfWork
         ICouponServices Coupon { get; }
         IUserServices User { get; }
         IMenuItemServices MenuItem { get; }
+        IShoppingCartServices ShoppingCart { get; }
     }
 }
