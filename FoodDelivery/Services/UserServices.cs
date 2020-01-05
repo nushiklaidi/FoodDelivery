@@ -42,6 +42,13 @@ namespace FoodDelivery.Services
             return await _db.ApplicationUser.Where(u => u.Id == id).FirstOrDefaultAsync();
         }
 
+        public async Task<ApplicationUser> GetUserByEmail(string userEmail)
+        {
+            return await _db.ApplicationUser
+                            .Where(u => u.Email.ToLower().Contains(userEmail.ToLower()))
+                            .FirstOrDefaultAsync();
+        }
+        
         public async Task<ApplicationUser> LockUser(string id)
         {
             if (id == null)

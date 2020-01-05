@@ -18,12 +18,10 @@ namespace FoodDelivery.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ApplicationDbContext _db;
         private readonly IUnitOfWork _unitOfWork;
 
-        public HomeController(ApplicationDbContext db, IUnitOfWork untOfWork)
+        public HomeController(IUnitOfWork untOfWork)
         {
-            _db = db;
             _unitOfWork = untOfWork;
         }
 
@@ -93,6 +91,7 @@ namespace FoodDelivery.Controllers
                 return View(shoppingCart);
             }
         }
+
         public IActionResult Privacy()
         {
             return View();

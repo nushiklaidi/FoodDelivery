@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using FoodDelivery.Data;
 using FoodDelivery.Models;
 using FoodDelivery.Models.ViewModels;
+using FoodDelivery.Services;
+using FoodDelivery.Services.UnitOfWork;
 using FoodDelivery.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -18,14 +20,14 @@ namespace FoodDelivery.Controllers.Customer
     public class OrderController : Controller
     {
         private readonly IEmailSender _emailSender;
-        private ApplicationDbContext _db;
+        private readonly IUnitOfWork _unitOfWork;
 
         private int PageSize = 1;
 
-        public OrderController(ApplicationDbContext db, IEmailSender emailSender)
+        public OrderController(IEmailSender emailSender, IUnitOfWork unitOfWork)
         {
-            _db = db;
             _emailSender = emailSender;
+            _unitOfWork = unitOfWork;
         }
 
         public IActionResult Index()
@@ -36,13 +38,12 @@ namespace FoodDelivery.Controllers.Customer
         [Authorize]
         public async Task<IActionResult> Confirm(int id)
         {
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var getUserId = await _unitOfWork.User.GetCurrentUser();
 
             OrderDetailsViewModel orderDetailsVM = new OrderDetailsViewModel()
             {
-                Order = await _db.Order.Include(u => u.ApplicationUser).Where(u => u.Id == id && u.UserId == claim.Value).FirstOrDefaultAsync(),
-                OrderDetails = await _db.OrderDetails.Where(o => o.OrderId == id).ToListAsync()
+                Order = await _unitOfWork.OrderServices.GetOrderByUserId(id, getUserId.Id),
+                OrderDetails = await _unitOfWork.OrderDetailServices.GetDetailByOrderId(id)
             };
 
             return View(orderDetailsVM);
@@ -50,22 +51,21 @@ namespace FoodDelivery.Controllers.Customer
 
         public async Task<IActionResult> OrderHistory(int productPage = 1)
         {
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            var getUser = await _unitOfWork.User.GetCurrentUser();
 
             OrderListViewModel orderListVM = new OrderListViewModel()
             {
                 Orders = new List<OrderDetailsViewModel>()
             };
-            
-            List<Order> orderHeader = await _db.Order.Include(o => o.ApplicationUser).Where(u => u.UserId == claim.Value).ToListAsync();
+
+            List<Order> orderHeader = await _unitOfWork.OrderServices.GetOrderListByUserId(getUser.Id);
 
             foreach (Order item in orderHeader)
             {
                 OrderDetailsViewModel individual = new OrderDetailsViewModel
                 {
                     Order = item,
-                    OrderDetails = await _db.OrderDetails.Where(o => o.OrderId == item.Id).ToListAsync()
+                    OrderDetails = await _unitOfWork.OrderDetailServices.GetDetailByOrderId(item.Id)
                 };
                 orderListVM.Orders.Add(individual);
             }
@@ -88,11 +88,11 @@ namespace FoodDelivery.Controllers.Customer
         {
             OrderDetailsViewModel orderDetailsVM = new OrderDetailsViewModel()
             {
-                Order = await _db.Order.Where(o => o.Id == Id).FirstOrDefaultAsync(),
-                OrderDetails = await _db.OrderDetails.Where(m => m.OrderId == Id).ToListAsync()                
+                Order = await _unitOfWork.OrderServices.GetOrderById(Id),
+                OrderDetails = await _unitOfWork.OrderDetailServices.GetDetailByOrderId(Id)                
             };
 
-            orderDetailsVM.Order.ApplicationUser = await _db.ApplicationUser.Where(u => u.Id == orderDetailsVM.Order.UserId).FirstOrDefaultAsync();
+            orderDetailsVM.Order.ApplicationUser = await _unitOfWork.User.GetId(orderDetailsVM.Order.UserId);
 
             return PartialView("_IndividualOrderDetails", orderDetailsVM);
         }
@@ -101,17 +101,15 @@ namespace FoodDelivery.Controllers.Customer
         public async Task<IActionResult> ManageOrder()
         {
             List<OrderDetailsViewModel> orderDetailsVM = new List<OrderDetailsViewModel>();
-            
-            List<Order> orderHeader = await _db.Order
-                .Where(o => o.Status == StaticDetail.StatusSubmitted || o.Status == StaticDetail.StatusInProcess)                
-                .ToListAsync();
+
+            List<Order> orderHeader = await _unitOfWork.OrderServices.GetSubmitedAndProcessOrder();
 
             foreach (Order item in orderHeader)
             {
                 OrderDetailsViewModel individual = new OrderDetailsViewModel
                 {
                     Order = item,
-                    OrderDetails = await _db.OrderDetails.Where(o => o.OrderId == item.Id).ToListAsync()
+                    OrderDetails = await _unitOfWork.OrderDetailServices.GetDetailByOrderId(item.Id)
                 };
                 orderDetailsVM.Add(individual);
             }
@@ -122,19 +120,15 @@ namespace FoodDelivery.Controllers.Customer
         [Authorize(Roles = StaticDetail.KitchenUser + "," + StaticDetail.ManagerUser)]
         public async Task<IActionResult> OrderPrepare(int OrderId)
         {
-            Order order = await _db.Order.FindAsync(OrderId);
-            order.Status = StaticDetail.StatusInProcess;
-            await _db.SaveChangesAsync();
+            await _unitOfWork.OrderServices.ChangeOrderStatusInProcess(OrderId);
+
             return RedirectToAction("ManageOrder", "Order");
         }
 
         [Authorize(Roles = StaticDetail.KitchenUser + "," + StaticDetail.ManagerUser)]
         public async Task<IActionResult> OrderReady(int OrderId)
         {
-            Order order = await _db.Order.FindAsync(OrderId);
-            order.Status = StaticDetail.StatusReady;
-            await _db.SaveChangesAsync();
-            await _emailSender.SendEmailAsync(_db.Users.Where(u => u.Id == order.UserId).FirstOrDefault().Email, "Food - Order ready for pickup " + order.Id.ToString(), "Order is ready for pickup");
+            await _unitOfWork.OrderServices.ChangeOrderStatusInReady(OrderId);
             
             return RedirectToAction("ManageOrder", "Order");
         }
@@ -142,10 +136,7 @@ namespace FoodDelivery.Controllers.Customer
         [Authorize(Roles = StaticDetail.KitchenUser + "," + StaticDetail.ManagerUser)]
         public async Task<IActionResult> OrderCancel(int OrderId)
         {
-            Order order = await _db.Order.FindAsync(OrderId);
-            order.Status = StaticDetail.StatusCancelled;
-            await _db.SaveChangesAsync();
-            await _emailSender.SendEmailAsync(_db.Users.Where(u => u.Id == order.UserId).FirstOrDefault().Email, "Food - Order Canceled " + order.Id.ToString(), "Order has been canceled successfully");
+            await _unitOfWork.OrderServices.ChangeOrderStatusInCancel(OrderId);
 
             return RedirectToAction("ManageOrder", "Order");
         }
@@ -187,29 +178,21 @@ namespace FoodDelivery.Controllers.Customer
 
                 if (searchName != null)
                 {
-                    OrderList = await _db.Order.Include(o => o.ApplicationUser)
-                        .Where(u => u.PickupName.ToLower().Contains(searchName.ToLower()))
-                        .ToListAsync();
+                    OrderList = await _unitOfWork.OrderServices.GetOrderListByUserName(searchName);
                 }
                 else
                 {
                     if (searchEmail != null)
                     {
-                        user = await _db.ApplicationUser
-                            .Where(u => u.Email.ToLower().Contains(searchEmail.ToLower()))
-                            .FirstOrDefaultAsync();
+                        user = await _unitOfWork.User.GetUserByEmail(searchEmail);
 
-                        OrderList = await _db.Order.Include(o => o.ApplicationUser)
-                            .Where(o => o.UserId == user.Id)
-                            .ToListAsync();
+                        OrderList = await _unitOfWork.OrderServices.GetOrderListByUserId(user.Id);
                     }
                     else
                     {
                         if (searchPhone != null)
                         {
-                            OrderList = await _db.Order.Include(o => o.ApplicationUser)
-                                .Where(u => u.PhoneNumber.Contains(searchPhone))
-                                .ToListAsync();
+                            OrderList = await _unitOfWork.OrderServices.GetOrderListByUserPhone(searchPhone);
                         }
                     }
                 }
@@ -217,9 +200,7 @@ namespace FoodDelivery.Controllers.Customer
             }
             else
             {
-                OrderList = await _db.Order.Include(o => o.ApplicationUser)
-                    .Where(u => u.Status == StaticDetail.StatusReady)
-                    .ToListAsync();
+                OrderList = await _unitOfWork.OrderServices.GetOrderListWithStatusReady();
             }
 
             foreach (Order item in OrderList)
@@ -227,7 +208,7 @@ namespace FoodDelivery.Controllers.Customer
                 OrderDetailsViewModel individual = new OrderDetailsViewModel
                 {
                     Order = item,
-                    OrderDetails = await _db.OrderDetails.Where(o => o.OrderId == item.Id).ToListAsync()
+                    OrderDetails = await _unitOfWork.OrderDetailServices.GetDetailByOrderId(item.Id)
                 };
                 orderListVM.Orders.Add(individual);
             }
@@ -251,10 +232,7 @@ namespace FoodDelivery.Controllers.Customer
         [ActionName("OrderPickup")]
         public async Task<IActionResult> OrderPickupPost(int orderId)
         {
-            Order order = await _db.Order.FindAsync(orderId);
-            order.Status = StaticDetail.StatusForDelivery;
-            await _db.SaveChangesAsync();
-            await _emailSender.SendEmailAsync(_db.Users.Where(u => u.Id == order.UserId).FirstOrDefault().Email, "Food - Order Completed " + order.Id.ToString(), "Order has been completed successfully");
+            await _unitOfWork.OrderServices.ChangeOrderStatusInDelivery(orderId);
 
             return RedirectToAction("OrderPickup", "Order");
         }
@@ -296,29 +274,21 @@ namespace FoodDelivery.Controllers.Customer
 
                 if (searchName != null)
                 {
-                    OrderList = await _db.Order.Include(o => o.ApplicationUser)
-                        .Where(u => u.PickupName.ToLower().Contains(searchName.ToLower()))
-                        .ToListAsync();
+                    OrderList = await _unitOfWork.OrderServices.GetOrderListByUserName(searchName);
                 }
                 else
                 {
                     if (searchEmail != null)
                     {
-                        user = await _db.ApplicationUser
-                            .Where(u => u.Email.ToLower().Contains(searchEmail.ToLower()))
-                            .FirstOrDefaultAsync();
+                        user = await _unitOfWork.User.GetUserByEmail(searchEmail);
 
-                        OrderList = await _db.Order.Include(o => o.ApplicationUser)
-                            .Where(o => o.UserId == user.Id)
-                            .ToListAsync();
+                        OrderList = await _unitOfWork.OrderServices.GetOrderListByUserId(user.Id);
                     }
                     else
                     {
                         if (searchPhone != null)
                         {
-                            OrderList = await _db.Order.Include(o => o.ApplicationUser)
-                                .Where(u => u.PhoneNumber.Contains(searchPhone))
-                                .ToListAsync();
+                            OrderList = await _unitOfWork.OrderServices.GetOrderListByUserPhone(searchPhone);
                         }
                     }
                 }
@@ -326,9 +296,7 @@ namespace FoodDelivery.Controllers.Customer
             }
             else
             {
-                OrderList = await _db.Order.Include(o => o.ApplicationUser)
-                    .Where(u => u.Status == StaticDetail.StatusForDelivery)
-                    .ToListAsync();
+                OrderList = await _unitOfWork.OrderServices.GetOrderListWithStatusForDelivery();
             }
 
             foreach (Order item in OrderList)
@@ -336,7 +304,7 @@ namespace FoodDelivery.Controllers.Customer
                 OrderDetailsViewModel individual = new OrderDetailsViewModel
                 {
                     Order = item,
-                    OrderDetails = await _db.OrderDetails.Where(o => o.OrderId == item.Id).ToListAsync()
+                    OrderDetails = await _unitOfWork.OrderDetailServices.GetDetailByOrderId(item.Id)
                 };
                 orderListVM.Orders.Add(individual);
             }
@@ -360,10 +328,7 @@ namespace FoodDelivery.Controllers.Customer
         [ActionName("OrderDelivery")]
         public async Task<IActionResult> OrderDeliveryPost(int orderId)
         {
-            Order order = await _db.Order.FindAsync(orderId);
-            order.Status = StaticDetail.StatusCompleted;
-            await _db.SaveChangesAsync();
-            await _emailSender.SendEmailAsync(_db.Users.Where(u => u.Id == order.UserId).FirstOrDefault().Email, "Food - Order Delivered " + order.Id.ToString(), "Order has been Delivered successfully");
+            await _unitOfWork.OrderServices.ChangeOrderStatusInComplete(orderId);
 
             return RedirectToAction("OrderDelivery", "Order");
         }

@@ -14,5 +14,6 @@ namespace FoodDelivery.Services
         Task<ApplicationUser> GetId(string id);
         Task<ApplicationUser> LockUser(string id);
         Task<ApplicationUser> UnLockUser(string id);
+        Task<ApplicationUser> GetUserByEmail(string userEmail);
     }
 }
