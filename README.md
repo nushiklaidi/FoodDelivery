@@ -1,4 +1,4 @@
-# FoodDeliver
+# Food Delivery
 Project example Asp.Net Core Mvc implementation of food delivery system. Content Management, Order History, Orders, Email Notification and more.
 
 
