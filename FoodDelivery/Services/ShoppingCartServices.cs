@@ -35,6 +35,11 @@ namespace FoodDelivery.Services
             return shoppingCart;
         }
 
+        public async Task<IEnumerable<ShoppingCart>> GetShoppingCartListByUserId(string userId)
+        {
+            return await _db.ShoppingCart.Where(s => s.ApplicationUserId == userId).ToListAsync();
+        }
+
         public int GetShoppingCartsCount(string id)
         {
             return _db.ShoppingCart.Where(u => u.ApplicationUserId == id).ToList().Count;

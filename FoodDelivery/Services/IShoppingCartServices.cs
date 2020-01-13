@@ -10,5 +10,6 @@ namespace FoodDelivery.Services
     {
         int GetShoppingCartsCount(string id);
         Task<ShoppingCart> AddToShoppingCart(ShoppingCart shoppingCart);
+        Task<IEnumerable<ShoppingCart>> GetShoppingCartListByUserId(string userId);
     }
 }

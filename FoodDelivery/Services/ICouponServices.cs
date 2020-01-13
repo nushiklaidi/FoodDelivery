@@ -14,5 +14,6 @@ namespace FoodDelivery.Services
         Task<Coupon> Update(Coupon coupon);
         Task<Coupon> Delete(int? id);
         Task<IEnumerable<Coupon>> GetActiveCoupon();
+        Task<Coupon> GetCouponCode(string couponName);
     }
 }

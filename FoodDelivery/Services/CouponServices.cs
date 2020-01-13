@@ -45,6 +45,11 @@ namespace FoodDelivery.Services
             return await _db.Coupon.ToListAsync();
         }
 
+        public async Task<Coupon> GetCouponCode(string couponName)
+        {
+            return await _db.Coupon.Where(c => c.Name.ToLower() == couponName.ToLower()).FirstOrDefaultAsync();
+        }
+
         public async Task<Coupon> GetId(int? id)
         {
             return await _db.Coupon.SingleOrDefaultAsync(c => c.Id == id);

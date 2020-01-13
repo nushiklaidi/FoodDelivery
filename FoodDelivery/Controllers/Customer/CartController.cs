@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FoodDelivery.Data;
 using FoodDelivery.Models;
 using FoodDelivery.Models.ViewModels;
+using FoodDelivery.Services.UnitOfWork;
 using FoodDelivery.Utility;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -18,14 +19,16 @@ namespace FoodDelivery.Controllers.Customer
     {
         private readonly ApplicationDbContext _db;
         private readonly IEmailSender _emailSender;
+        private readonly IUnitOfWork _unitOfWork;
 
         [BindProperty]
         public OrderDetailsCartViewModel orderDetailsVM { get; set; }
 
-        public CartController(ApplicationDbContext db, IEmailSender emailSender)
+        public CartController(ApplicationDbContext db, IEmailSender emailSender, IUnitOfWork unitOfWork)
         {
             _db = db;
             _emailSender = emailSender;
+            _unitOfWork = unitOfWork;
         }
         
         public async Task<IActionResult> Index()
@@ -34,11 +37,11 @@ namespace FoodDelivery.Controllers.Customer
             {
                 Order = new Order()
             };
-            orderDetailsVM.Order.OrderTotal = 0;
 
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-            var cart = _db.ShoppingCart.Where(c => c.ApplicationUserId == claim.Value);
+            orderDetailsVM.Order.OrderTotal = 0;
+            
+            var getUserId = await _unitOfWork.User.GetCurrentUser();
+            var cart = await _unitOfWork.ShoppingCart.GetShoppingCartListByUserId(getUserId.Id);
 
             if (cart != null)
             {
@@ -47,16 +50,15 @@ namespace FoodDelivery.Controllers.Customer
 
             foreach(var list in orderDetailsVM.ListCart)
             {
-                list.MenuItem = await _db.MenuItem.Where(m => m.Id == list.MenuItemId).FirstOrDefaultAsync();
+                list.MenuItem = await _unitOfWork.MenuItem.GetId(list.MenuItemId);
                 orderDetailsVM.Order.OrderTotal = orderDetailsVM.Order.OrderTotal + (list.MenuItem.Price * list.Count);
             }
             orderDetailsVM.Order.OrderTotalOriginal = orderDetailsVM.Order.OrderTotal;
 
             if (HttpContext.Session.GetString(StaticDetail.ssCouponCode) != null)
             {
-                orderDetailsVM.Order.CouponCode = HttpContext.Session.GetString(StaticDetail.ssCouponCode);
-
-                var couponFromDb = await _db.Coupon.Where(c => c.Name.ToLower() == orderDetailsVM.Order.CouponCode.ToLower()).FirstOrDefaultAsync();                
+                orderDetailsVM.Order.CouponCode = HttpContext.Session.GetString(StaticDetail.ssCouponCode);                
+                var couponFromDb = await _unitOfWork.Coupon.GetCouponCode(orderDetailsVM.Order.CouponCode);
                 orderDetailsVM.Order.OrderTotal = StaticDetail.DiscountedPrice(couponFromDb, orderDetailsVM.Order.OrderTotalOriginal);
             }
 
@@ -70,14 +72,11 @@ namespace FoodDelivery.Controllers.Customer
             {
                 Order = new Order()
             };
-            orderDetailsVM.Order.OrderTotal = 0;
+            orderDetailsVM.Order.OrderTotal = 0;            
 
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-
-            ApplicationUser applicationUser = await _db.ApplicationUser.Where(c => c.Id == claim.Value).FirstOrDefaultAsync();
-
-            var cart = _db.ShoppingCart.Where(c => c.ApplicationUserId == claim.Value);
+            ApplicationUser applicationUser = await _unitOfWork.User.GetCurrentUser();
+            
+            var cart = await _unitOfWork.ShoppingCart.GetShoppingCartListByUserId(applicationUser.Id);
 
             if (cart != null)
             {
@@ -86,9 +85,10 @@ namespace FoodDelivery.Controllers.Customer
 
             foreach (var list in orderDetailsVM.ListCart)
             {
-                list.MenuItem = await _db.MenuItem.Where(m => m.Id == list.MenuItemId).FirstOrDefaultAsync();
+                list.MenuItem = await _unitOfWork.MenuItem.GetId(list.MenuItemId);
                 orderDetailsVM.Order.OrderTotal = orderDetailsVM.Order.OrderTotal + (list.MenuItem.Price * list.Count);
             }
+
             orderDetailsVM.Order.OrderTotalOriginal = orderDetailsVM.Order.OrderTotal;
             orderDetailsVM.Order.PickupName = applicationUser.Name;
             orderDetailsVM.Order.PhoneNumber = applicationUser.PhoneNumber;
@@ -97,8 +97,7 @@ namespace FoodDelivery.Controllers.Customer
             if (HttpContext.Session.GetString(StaticDetail.ssCouponCode) != null)
             {
                 orderDetailsVM.Order.CouponCode = HttpContext.Session.GetString(StaticDetail.ssCouponCode);
-
-                var couponFromDb = await _db.Coupon.Where(c => c.Name.ToLower() == orderDetailsVM.Order.CouponCode.ToLower()).FirstOrDefaultAsync();
+                var couponFromDb = await _unitOfWork.Coupon.GetCouponCode(orderDetailsVM.Order.CouponCode);
                 orderDetailsVM.Order.OrderTotal = StaticDetail.DiscountedPrice(couponFromDb, orderDetailsVM.Order.OrderTotalOriginal);
             }
 
