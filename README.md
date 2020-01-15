@@ -7,6 +7,7 @@ Project example Asp.Net Core Mvc implementation of food delivery system. Content
 - Asp.Net Core Mvc
 - EF / Entity Framework
 - Code First
+- Repository and Unit of Work Pattern
 - C#
 - Beautiful Bootstrap
 - Javascript
