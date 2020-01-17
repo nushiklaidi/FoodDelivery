@@ -21,6 +21,6 @@ namespace FoodDelivery.Services
         Task<Order> ChangeOrderStatusInCancel(int orderId);
         Task<Order> ChangeOrderStatusInDelivery(int orderId);
         Task<Order> ChangeOrderStatusInComplete(int orderId);
-
+        Task<Order> CreateOrder(Order order);
     }
 }

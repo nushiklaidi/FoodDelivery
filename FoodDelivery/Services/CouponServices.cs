@@ -55,7 +55,7 @@ namespace FoodDelivery.Services
             return await _db.Coupon.SingleOrDefaultAsync(c => c.Id == id);
         }
 
-        public async Task<Coupon> Update(Coupon coupon)
+        public Task<Coupon> Update(Coupon coupon)
         {
             throw new NotImplementedException();
         }

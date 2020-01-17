@@ -70,6 +70,14 @@ namespace FoodDelivery.Services
             return order;
         }
 
+        public async Task<Order> CreateOrder(Order order)
+        {
+            _db.Order.Add(order);
+            await _db.SaveChangesAsync();
+
+            return order;
+        }
+
         public async Task<Order> GetOrderById(int orderId)
         {
             return await _db.Order

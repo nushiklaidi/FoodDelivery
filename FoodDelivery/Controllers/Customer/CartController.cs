@@ -112,8 +112,11 @@ namespace FoodDelivery.Controllers.Customer
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-            
-            orderDetailsVM.ListCart = await _db.ShoppingCart.Where(c => c.ApplicationUserId == claim.Value).ToListAsync();
+
+            var getUserId = await _unitOfWork.User.GetCurrentUser();
+            var cartList = await _unitOfWork.ShoppingCart.GetShoppingCartListByUserId(getUserId.Id);
+
+            orderDetailsVM.ListCart = cartList.ToList();
 
             orderDetailsVM.Order.PaymentStatus = StaticDetail.PaymentStatusApproved;
             orderDetailsVM.Order.OrderDate = DateTime.Now;
@@ -122,15 +125,14 @@ namespace FoodDelivery.Controllers.Customer
             orderDetailsVM.Order.PickUpTime = Convert.ToDateTime(orderDetailsVM.Order.PickUpDate.ToShortDateString() + " " + orderDetailsVM.Order.PickUpTime.ToShortTimeString());
 
             List<OrderDetails> orderDetailsList = new List<OrderDetails>();
-
-            _db.Order.Add(orderDetailsVM.Order);
-            await _db.SaveChangesAsync();
+            
+            await _unitOfWork.OrderServices.CreateOrder(orderDetailsVM.Order);
 
             orderDetailsVM.Order.OrderTotalOriginal = 0;
             
             foreach (var item in orderDetailsVM.ListCart)
             {
-                item.MenuItem = await _db.MenuItem.Where(m => m.Id == item.MenuItemId).FirstOrDefaultAsync();
+                item.MenuItem = await _unitOfWork.MenuItem.GetId(item.MenuItemId);
                 OrderDetails orderDetails = new OrderDetails
                 {
                     MenuItemId = item.MenuItemId,
@@ -147,7 +149,7 @@ namespace FoodDelivery.Controllers.Customer
             {
                 orderDetailsVM.Order.CouponCode = HttpContext.Session.GetString(StaticDetail.ssCouponCode);
 
-                var couponFromDb = await _db.Coupon.Where(c => c.Name.ToLower() == orderDetailsVM.Order.CouponCode.ToLower()).FirstOrDefaultAsync();
+                var couponFromDb = await _unitOfWork.Coupon.GetCouponCode(orderDetailsVM.Order.CouponCode);
                 orderDetailsVM.Order.OrderTotal = StaticDetail.DiscountedPrice(couponFromDb, orderDetailsVM.Order.OrderTotalOriginal);
             }
             else
@@ -189,31 +191,15 @@ namespace FoodDelivery.Controllers.Customer
 
         public async Task<IActionResult> Plus(int cartId)
         {
-            var cart = await _db.ShoppingCart.Where(c => c.Id == cartId).FirstOrDefaultAsync();
-            cart.Count += 1;
+            await _unitOfWork.ShoppingCart.OrderItemPlus(cartId);
 
-            await _db.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         public async Task<IActionResult> Minus(int cartId)
         {
-            var cart = await _db.ShoppingCart.Where(c => c.Id == cartId).FirstOrDefaultAsync();
-
-            if (cart.Count == 1)
-            {
-                _db.ShoppingCart.Remove(cart);
-                await _db.SaveChangesAsync();
-
-                var cnt = _db.ShoppingCart.Where(c => c.ApplicationUserId == cart.ApplicationUserId).ToList().Count;
-                HttpContext.Session.SetInt32(StaticDetail.ssShoppingCartCount, cnt);
-            }
-            else
-            {
-                cart.Count -= 1;
-
-                await _db.SaveChangesAsync();                
-            }
+            await _unitOfWork.ShoppingCart.OrderItemMinus(cartId);
+            
             return RedirectToAction(nameof(Index));
         }
 
