@@ -96,9 +96,9 @@ namespace FoodDelivery.Services
         public async Task<List<Order>> GetOrderListByUserId(string userId)
         {
             return await _db.Order
-                .Include(o => o.ApplicationUser)
-                .Where(u => u.UserId == userId)
-                .ToListAsync();
+                    .Include(o => o.ApplicationUser)
+                    .Where(u => u.UserId == userId)
+                    .ToListAsync();
         }
 
         public async Task<List<Order>> GetOrderListByUserName(string userName)
