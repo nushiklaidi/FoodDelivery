@@ -19,14 +19,14 @@ namespace FoodDelivery.Controllers.Admin
     public class MenuItemController : Controller
     {
         private readonly ApplicationDbContext _db;
-        private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly IWebHostEnvironment _hostingEnvironment;
 
         private readonly IUnitOfWork _unitOfWork;
 
         [BindProperty]
         public MenuItemViewModel MenuItemVM { get; set; }
 
-        public MenuItemController(ApplicationDbContext db, IHostingEnvironment hostingEnvironment, IUnitOfWork unitOfWork)
+        public MenuItemController(ApplicationDbContext db, IWebHostEnvironment hostingEnvironment, IUnitOfWork unitOfWork)
         {
             _db = db;
             _hostingEnvironment = hostingEnvironment;

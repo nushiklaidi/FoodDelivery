@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using FoodDelivery.Services;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using FoodDelivery.Services.UnitOfWork;
+using Microsoft.Extensions.Hosting;
 
 namespace FoodDelivery
 {
@@ -43,8 +44,10 @@ namespace FoodDelivery
                     Configuration.GetConnectionString("DefaultConnection")));
             services.AddIdentity<IdentityUser, IdentityRole>()
                 .AddDefaultTokenProviders()
-                .AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+            services.AddControllersWithViews();
+            services.AddRazorPages();
 
             services.AddTransient<IUnitOfWork, UnitOfWork>();
             services.AddTransient<ICategoryServices, CategoryServices>();
@@ -61,7 +64,6 @@ namespace FoodDelivery
 
             services.Configure<EmailOptions>(Configuration);            
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
             services.AddSession(options =>
             {
@@ -72,7 +74,7 @@ namespace FoodDelivery
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -88,15 +90,17 @@ namespace FoodDelivery
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+            app.UseRouting();
             app.UseCookiePolicy();
             app.UseSession();
             app.UseAuthentication();
 
-            app.UseMvc(routes =>
+            app.UseEndpoints(endpoints =>
             {
-                routes.MapRoute(
+                endpoints.MapControllerRoute(
                     name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapRazorPages();
             });
         }
     }
