@@ -18,6 +18,10 @@ namespace FoodDelivery.Controllers.Admin
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        /// <summary>
+        /// Category Controller constructor
+        /// </summary>
+        /// <param name="unitOfWork"></param>
         public CategoryController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
